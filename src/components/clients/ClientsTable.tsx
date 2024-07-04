@@ -1,0 +1,261 @@
+import axios from "axios";
+import { CSSProperties, ChangeEvent, useState } from "react";
+import { socket } from "../../socket";
+
+import { useModalContext } from "../../context/ModalContext";
+import { useClientsContext } from "../../context/ClientsContext";
+import { useUsersContext } from "../../context/UsersContext";
+
+import { DB_URL } from "../../utils/database";
+
+import {
+  Table,
+  Skeleton,
+  Button,
+  FormControl,
+  FormLabel,
+  Select,
+  Option,
+  Typography,
+  IconButton,
+  Input,
+  Checkbox,
+} from "@mui/joy";
+
+import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
+
+function stableSort<T>(array: readonly T[]) {
+  const stabilizedThis = array.map((el, index) => [el, index] as [T, number]);
+  return stabilizedThis.map((el) => el[0]);
+}
+
+function labelDisplayedRows({
+  from,
+  to,
+  count,
+}: {
+  from: number;
+  to: number;
+  count: number;
+}) {
+  return `${from}–${to} of ${count !== -1 ? count : `more than ${to}`}`;
+}
+
+const ClientsTable = () => {
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [page, setPage] = useState(0);
+  const [filter, setFilter] = useState("");
+  const { clients, isLoading } = useClientsContext();
+  const { users } = useUsersContext();
+  const { dispatch } = useModalContext();
+
+  const handleFilterChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setFilter(event.target.value);
+  };
+
+  const filteredData = clients.filter((row) => {
+    return (
+      row.name.toLowerCase().includes(filter.toLowerCase()) ||
+      row.address.toLowerCase().includes(filter.toLowerCase())
+    );
+  });
+
+  const handleChangePage = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event: any, newValue: number | null) => {
+    event.preventDefault();
+    setRowsPerPage(parseInt(newValue!.toString(), 10));
+    setPage(0);
+  };
+  const getAssignedUserName = (userId: string) => {
+    const user = users.find((client) => client._id === userId);
+    return user ? `${user.name} ${user.surname}` : "-";
+  };
+
+  const getLabelDisplayedRowsTo = () => {
+    if (clients.length === -1) {
+      return (page + 1) * rowsPerPage;
+    }
+    return rowsPerPage === -1
+      ? clients.length
+      : Math.min(clients.length, (page + 1) * rowsPerPage);
+  };
+
+  const handleSettleClient = async (clientId: string, settled: boolean) => {
+    try {
+      const response = await axios.patch(
+        `${DB_URL}/clients/${clientId}/settle`,
+        { settled },
+        {
+          withCredentials: true,
+        }
+      );
+      if (response.status === 200) {
+        socket.emit("sendClients");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const emptyRows =
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - clients.length) : 0;
+
+  if (isLoading) {
+    return (
+      <Skeleton
+        variant="overlay"
+        sx={{
+          height: "300px",
+          width: "100%",
+          position: "relative",
+        }}></Skeleton>
+    );
+  }
+
+  return (
+    <>
+      <FormControl>
+        <FormLabel>Filter by name/address</FormLabel>
+        <Input
+          type="text"
+          color="primary"
+          placeholder="Name/Address"
+          variant="outlined"
+          onChange={handleFilterChange}
+        />
+      </FormControl>
+      <Table aria-label="clients table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th className="text-center">Address</th>
+            <th className="text-center">Assigned to</th>
+            <th className="text-center">Settled</th>
+            <th className="text-right">-</th>
+          </tr>
+        </thead>
+        <tbody>
+          {stableSort(filteredData)
+            .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+            .map((client) => (
+              <tr key={client._id}>
+                <td>{client.name}</td>
+                <td className="text-center">{client.address}</td>
+                <td className="text-center">
+                  {getAssignedUserName(client.userId)}
+                </td>
+                <td className="text-center">
+                  <Checkbox
+                    onChange={(e) =>
+                      handleSettleClient(client._id, e.target.checked)
+                    }
+                    checked={client.settled}
+                  />
+                </td>
+                <td className="justify-end items-center flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      dispatch({
+                        type: "EDIT_CLIENT",
+                        payload: { clientId: client._id },
+                      })
+                    }>
+                    Edit
+                  </Button>
+                  <Button
+                    size="sm"
+                    color="danger"
+                    onClick={() => {
+                      dispatch({
+                        type: "DELETE_CLIENT",
+                        payload: { clientId: client._id },
+                      });
+                    }}>
+                    Delete
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          {emptyRows > 0 && (
+            <tr
+              style={
+                {
+                  height: `calc(${emptyRows} * 40px)`,
+                  "--TableRow-hoverBackground": "transparent",
+                } as CSSProperties
+              }>
+              <td colSpan={4} aria-hidden />
+            </tr>
+          )}
+          {filteredData.length === 0 && (
+            <tr
+              style={
+                {
+                  height: `calc(${emptyRows} * 40px)`,
+                  "--TableRow-hoverBackground": "transparent",
+                } as CSSProperties
+              }>
+              <td colSpan={4} className="text-center">
+                No clients
+              </td>
+            </tr>
+          )}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colSpan={4} className="bg-transparent">
+              <div className="flex gap-2 items-center justify-end ">
+                <FormControl orientation="horizontal" size="sm">
+                  <FormLabel>Rows per page:</FormLabel>
+                  <Select
+                    onChange={handleChangeRowsPerPage}
+                    value={rowsPerPage}>
+                    <Option value={5}>5</Option>
+                    <Option value={10}>10</Option>
+                    <Option value={20}>20</Option>
+                  </Select>
+                </FormControl>
+                <Typography textAlign="center" sx={{ minWidth: 80 }}>
+                  {labelDisplayedRows({
+                    from: clients.length === 0 ? 0 : page * rowsPerPage + 1,
+                    to: getLabelDisplayedRowsTo(),
+                    count: clients.length === -1 ? -1 : clients.length,
+                  })}
+                </Typography>
+                <div className="flex gap-2">
+                  <IconButton
+                    size="sm"
+                    color="neutral"
+                    variant="outlined"
+                    disabled={page === 0}
+                    onClick={() => handleChangePage(page - 1)}>
+                    <KeyboardArrowLeftIcon />
+                  </IconButton>
+                  <IconButton
+                    size="sm"
+                    color="neutral"
+                    variant="outlined"
+                    disabled={
+                      clients.length !== -1
+                        ? page >= Math.ceil(clients.length / rowsPerPage) - 1
+                        : false
+                    }
+                    onClick={() => handleChangePage(page + 1)}>
+                    <KeyboardArrowRightIcon />
+                  </IconButton>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tfoot>
+      </Table>
+    </>
+  );
+};
+
+export default ClientsTable;
