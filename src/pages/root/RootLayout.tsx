@@ -1,12 +1,12 @@
 import { Navigate, Outlet } from "react-router-dom";
 
-import { ModalProvider } from "../../context/ModalContext";
-import { useAuthContext } from "../../context/AuthContext";
-import { ClientsProvider } from "../../context/ClientsContext";
-import { UsersProvider } from "../../context/UsersContext";
+import { ModalProvider } from "@/context/ModalContext";
+import { useAuthContext } from "@/context/AuthContext";
+import { ClientsProvider } from "@/context/ClientsContext";
+import { UsersProvider } from "@/context/UsersContext";
 
-import Header from "../../components/shared/Header";
-import Modal from "../../components/shared/Modal";
+import Header from "@/components/shared/Header";
+import Modal from "@/components/shared/Modal";
 
 const RootLayout = () => {
   const { token } = useAuthContext();

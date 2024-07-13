@@ -13,6 +13,15 @@ export type User = {
   email: string;
 };
 
+export type ApiError = {
+  response: {
+    data: {
+      error: string;
+      status: string;
+    };
+  };
+};
+
 export type ModalState = {
   isOpen: boolean;
   isLoading: boolean;

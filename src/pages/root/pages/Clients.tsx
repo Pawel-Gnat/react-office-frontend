@@ -1,6 +1,6 @@
-import { useModalContext } from "../../../context/ModalContext";
+import { useModalContext } from "@/context/ModalContext";
 
-import ClientsTable from "../../../components/clients/ClientsTable";
+import ClientsTable from "@/components/clients/ClientsTable";
 
 import { Button } from "@mui/joy";
 

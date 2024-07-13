@@ -8,7 +8,7 @@ import {
   Dispatch,
   SetStateAction,
 } from "react";
-import { socket } from "../socket";
+// import { socket } from "../socket";
 
 import { DB_URL } from "../utils/database";
 
@@ -55,15 +55,15 @@ export const ClientsProvider = ({ children }: { children: ReactNode }) => {
     getClients();
   }, []);
 
-  useEffect(() => {
-    socket.on("clients", (data) => {
-      setClients(data);
-    });
+  // useEffect(() => {
+  //   socket.on("clients", (data) => {
+  //     setClients(data);
+  //   });
 
-    return () => {
-      socket.off("clients");
-    };
-  }, []);
+  //   return () => {
+  //     socket.off("clients");
+  //   };
+  // }, []);
 
   return (
     <ClientsContext.Provider

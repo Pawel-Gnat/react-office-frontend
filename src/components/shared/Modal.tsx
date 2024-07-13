@@ -1,4 +1,4 @@
-import { useModalContext } from "../../context/ModalContext";
+import { useModalContext } from "@/context/ModalContext";
 
 import ClientForm from "../clients/ClientForm";
 import DeleteClient from "../clients/DeleteClient";

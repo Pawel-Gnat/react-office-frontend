@@ -1,12 +1,13 @@
 import axios from "axios";
 import { CSSProperties, ChangeEvent, useState } from "react";
-import { socket } from "../../socket";
+// import { socket } from "../../socket";
 
-import { useModalContext } from "../../context/ModalContext";
-import { useClientsContext } from "../../context/ClientsContext";
-import { useUsersContext } from "../../context/UsersContext";
+import { useModalContext } from "@/context/ModalContext";
+import { useClientsContext } from "@/context/ClientsContext";
+import { useUsersContext } from "@/context/UsersContext";
+import { useSnackContext } from "@/context/SnackContext";
 
-import { DB_URL } from "../../utils/database";
+import { DB_URL } from "@/utils/database";
 
 import {
   Table,
@@ -46,7 +47,8 @@ const ClientsTable = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [page, setPage] = useState(0);
   const [filter, setFilter] = useState("");
-  const { clients, isLoading } = useClientsContext();
+  const { clients, setClients, isLoading } = useClientsContext();
+  const { setSnack } = useSnackContext();
   const { users } = useUsersContext();
   const { dispatch } = useModalContext();
 
@@ -94,10 +96,23 @@ const ClientsTable = () => {
         }
       );
       if (response.status === 200) {
-        socket.emit("sendClients");
+        // socket.emit("sendClients");
+        setClients((prev) =>
+          prev.map((client) =>
+            client._id === clientId ? { ...client, settled } : client
+          )
+        );
+        dispatch({ type: "HIDE" });
+        setSnack(response.data.message, response.data.status);
       }
     } catch (error) {
       console.log(error);
+
+      if (axios.isAxiosError(error)) {
+        if (error.response && error.response.data) {
+          setSnack(error.response.data.error, error.response.data.status);
+        }
+      }
     }
   };
 
@@ -189,7 +204,7 @@ const ClientsTable = () => {
                   "--TableRow-hoverBackground": "transparent",
                 } as CSSProperties
               }>
-              <td colSpan={4} aria-hidden />
+              <td colSpan={5} aria-hidden />
             </tr>
           )}
           {filteredData.length === 0 && (
@@ -200,7 +215,7 @@ const ClientsTable = () => {
                   "--TableRow-hoverBackground": "transparent",
                 } as CSSProperties
               }>
-              <td colSpan={4} className="text-center">
+              <td colSpan={5} className="text-center">
                 No clients
               </td>
             </tr>
@@ -208,7 +223,7 @@ const ClientsTable = () => {
         </tbody>
         <tfoot>
           <tr>
-            <td colSpan={4} className="bg-transparent">
+            <td colSpan={5} className="bg-transparent">
               <div className="flex gap-2 items-center justify-end ">
                 <FormControl orientation="horizontal" size="sm">
                   <FormLabel>Rows per page:</FormLabel>

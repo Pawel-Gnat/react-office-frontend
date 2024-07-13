@@ -8,7 +8,7 @@ import {
   Dispatch,
   SetStateAction,
 } from "react";
-import { socket } from "../socket";
+// import { socket } from "../socket";
 
 import { DB_URL } from "../utils/database";
 
@@ -57,15 +57,15 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
     getUsers();
   }, []);
 
-  useEffect(() => {
-    socket.on("users", (data) => {
-      setUsers(data);
-    });
+  // useEffect(() => {
+  //   socket.on("users", (data) => {
+  //     setUsers(data);
+  //   });
 
-    return () => {
-      socket.off("users");
-    };
-  }, []);
+  //   return () => {
+  //     socket.off("users");
+  //   };
+  // }, []);
 
   return (
     <UsersContext.Provider value={{ users, setUsers, isLoading, setIsLoading }}>

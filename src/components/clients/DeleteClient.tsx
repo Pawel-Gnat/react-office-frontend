@@ -1,14 +1,18 @@
 import axios from "axios";
-import { socket } from "../../socket";
+// import { socket } from "../../socket";
 
-import { useModalContext } from "../../context/ModalContext";
+import { useModalContext } from "@/context/ModalContext";
+import { useClientsContext } from "@/context/ClientsContext";
+import { useSnackContext } from "@/context/SnackContext";
 
-import { DB_URL } from "../../utils/database";
+import { DB_URL } from "@/utils/database";
 
 import { Button, Stack } from "@mui/joy";
 
 const DeleteClient = () => {
   const { isLoading, clientId, dispatch } = useModalContext();
+  const { setClients } = useClientsContext();
+  const { setSnack } = useSnackContext();
 
   const onDelete = async (clientId: string) => {
     if (isLoading) {
@@ -22,11 +26,19 @@ const DeleteClient = () => {
       });
 
       if (response.status === 200) {
-        socket.emit("sendClients");
+        // socket.emit("sendClients");
+        setClients((prev) => prev.filter((client) => client._id !== clientId));
         dispatch({ type: "HIDE" });
+        setSnack(response.data.message, response.data.status);
       }
     } catch (error) {
       console.log(error);
+
+      if (axios.isAxiosError(error)) {
+        if (error.response && error.response.data) {
+          setSnack(error.response.data.error, error.response.data.status);
+        }
+      }
     } finally {
       dispatch({ type: "LOADING", payload: { isLoading: false } });
     }

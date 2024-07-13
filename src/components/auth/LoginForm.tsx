@@ -1,14 +1,14 @@
-import Cookies from "js-cookie";
 import axios from "axios";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
-import { useAuthContext } from "../../context/AuthContext";
+import { useAuthContext } from "@/context/AuthContext";
+import { useSnackContext } from "@/context/SnackContext";
 
-import { loginSchema } from "../../utils/zod-schema";
-import { DB_URL } from "../../utils/database";
+import { loginSchema } from "@/utils/zod-schema";
+import { DB_URL } from "@/utils/database";
 
 import {
   FormControl,
@@ -22,6 +22,7 @@ import {
 
 const LoginForm = () => {
   const { setToken, isLoading, setIsLoading } = useAuthContext();
+  const { setSnack } = useSnackContext();
   const navigate = useNavigate();
   const {
     register,
@@ -49,14 +50,17 @@ const LoginForm = () => {
       if (response.status === 200) {
         setToken(response.data.token);
         localStorage.setItem("token", response.data.token);
-        Cookies.set("api_auth_token", response.data.token, {
-          expires: 7,
-          secure: true,
-        });
         navigate("/");
+        setSnack(response.data.message, response.data.status);
       }
     } catch (error) {
       console.log(error);
+
+      if (axios.isAxiosError(error)) {
+        if (error.response && error.response.data) {
+          setSnack(error.response.data.error, error.response.data.status);
+        }
+      }
     } finally {
       setIsLoading(false);
     }

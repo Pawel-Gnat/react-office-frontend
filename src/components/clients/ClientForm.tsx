@@ -2,14 +2,15 @@ import axios from "axios";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { socket } from "../../socket";
+// import { socket } from "../../socket";
 
-import { useClientsContext } from "../../context/ClientsContext";
-import { useUsersContext } from "../../context/UsersContext";
-import { useModalContext } from "../../context/ModalContext";
+import { useClientsContext } from "@/context/ClientsContext";
+import { useUsersContext } from "@/context/UsersContext";
+import { useModalContext } from "@/context/ModalContext";
+import { useSnackContext } from "@/context/SnackContext";
 
-import { clientSchema } from "../../utils/zod-schema";
-import { DB_URL } from "../../utils/database";
+import { clientSchema } from "@/utils/zod-schema";
+import { DB_URL } from "@/utils/database";
 
 import {
   FormControl,
@@ -22,10 +23,13 @@ import {
   Option,
 } from "@mui/joy";
 
+import { Client } from "@/types";
+
 const ClientForm = () => {
   const { isLoading, clientId, dispatch } = useModalContext();
-  const { clients } = useClientsContext();
+  const { clients, setClients } = useClientsContext();
   const { users } = useUsersContext();
+  const { setSnack } = useSnackContext();
   const client = clients.find((client) => client._id === clientId);
 
   const {
@@ -56,6 +60,18 @@ const ClientForm = () => {
     return "post";
   };
 
+  const handleClients = (responseClient: Client) => {
+    if (clientId) {
+      return setClients((prev) =>
+        prev.map((client) =>
+          client._id === responseClient._id ? responseClient : client
+        )
+      );
+    }
+
+    setClients((prev) => [...prev, responseClient]);
+  };
+
   const onSubmit = async (data: z.infer<typeof clientSchema>) => {
     if (isLoading) {
       return;
@@ -67,11 +83,19 @@ const ClientForm = () => {
         withCredentials: true,
       });
       if (response.status === 200) {
-        socket.emit("sendClients");
+        // socket.emit("sendClients");
+        handleClients(response.data.client);
         dispatch({ type: "HIDE" });
+        setSnack(response.data.message, response.data.status);
       }
     } catch (error) {
       console.log(error);
+
+      if (axios.isAxiosError(error)) {
+        if (error.response && error.response.data) {
+          setSnack(error.response.data.error, error.response.data.status);
+        }
+      }
     } finally {
       dispatch({ type: "LOADING", payload: { isLoading: false } });
     }

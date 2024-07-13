@@ -1,6 +1,8 @@
-import Cookies from "js-cookie";
+import axios from "axios";
 
-import { useAuthContext } from "../../context/AuthContext";
+import { useAuthContext } from "@/context/AuthContext";
+
+import { DB_URL } from "@/utils/database";
 
 import Navbar from "./Navbar";
 
@@ -12,7 +14,12 @@ const Header = () => {
   const logOut = async () => {
     setToken(null);
     localStorage.removeItem("token");
-    Cookies.remove("api_auth_token");
+
+    try {
+      axios.get(`${DB_URL}/auth/logout`, { withCredentials: true });
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (

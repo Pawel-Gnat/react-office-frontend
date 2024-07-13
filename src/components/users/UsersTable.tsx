@@ -1,8 +1,8 @@
 import { CSSProperties, ChangeEvent, useState } from "react";
 
-import { useModalContext } from "../../context/ModalContext";
-import { useUsersContext } from "../../context/UsersContext";
-import { useClientsContext } from "../../context/ClientsContext";
+import { useModalContext } from "@/context/ModalContext";
+import { useUsersContext } from "@/context/UsersContext";
+import { useClientsContext } from "@/context/ClientsContext";
 
 import {
   Table,

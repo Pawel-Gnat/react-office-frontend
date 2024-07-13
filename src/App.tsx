@@ -8,6 +8,7 @@ import AuthLayout from "./pages/auth/AuthLayout";
 
 import { ClientsPage, HomePage, UsersPage } from "./pages/root/pages";
 import { AuthPage } from "./pages/auth/pages";
+import NotFoundPage from "./pages/not-found/Home";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           {/* <Route path="/clients/:clientId" element={<ClientPage />} /> */}
           <Route path="/users" element={<UsersPage />} />
         </Route>
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </>
   );
